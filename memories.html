@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title> Ranoon</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #F0D080;
+    --gold-dim: #8a6f2e;
+    --black: #000000;
+    --black-soft: #0a0a0a;
+    --black-card: #111111;
+    --text: #e8d5a3;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'Tajawal', sans-serif;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ===== OPENING ===== */
+  #opening {
+    position: fixed; inset: 0; background: #000; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 1.2s ease, visibility 1.2s ease;
+  }
+  #opening.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  .opening-particles { position: absolute; inset: 0; overflow: hidden; }
+  .particle {
+    position: absolute; width: 2px; height: 2px;
+    background: var(--gold); border-radius: 50%;
+    animation: float-particle linear infinite; opacity: 0;
+  }
+  @keyframes float-particle {
+    0% { transform: translateY(110vh) scale(0); opacity: 0; }
+    10% { opacity: 0.8; } 90% { opacity: 0.8; }
+    100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+  }
+  .opening-line {
+    width: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    animation: expand-line 1.5s ease forwards 0.5s; margin-bottom: 40px;
+  }
+  @keyframes expand-line { to { width: min(300px, 80vw); } }
+  .opening-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 8vw, 4rem); font-style: italic; color: var(--gold);
+    text-align: center; opacity: 0; transform: translateY(30px);
+    animation: reveal-text 1.2s ease forwards 1.2s;
+    text-shadow: 0 0 60px rgba(201,168,76,0.5); letter-spacing: 2px; line-height: 1.3;
+  }
+  .opening-subtitle {
+    font-family: 'Tajawal', sans-serif;
+    font-size: clamp(0.9rem, 3vw, 1.1rem); color: rgba(201,168,76,0.6);
+    text-align: center; letter-spacing: 4px; opacity: 0;
+    animation: reveal-text 1s ease forwards 2s; margin-top: 16px;
+  }
+  .opening-line2 {
+    width: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    animation: expand-line 1.5s ease forwards 1.8s; margin-top: 40px;
+  }
+  .enter-btn {
+    margin-top: 50px; padding: 14px 40px;
+    border: 1px solid var(--gold); background: transparent; color: var(--gold);
+    font-family: 'Tajawal', sans-serif; font-size: 1rem; letter-spacing: 3px;
+    cursor: pointer; opacity: 0; animation: reveal-text 1s ease forwards 2.8s;
+    transition: all 0.4s ease; position: relative; overflow: hidden;
+  }
+  .enter-btn::before {
+    content: ''; position: absolute; inset: 0; background: var(--gold);
+    transform: scaleX(0); transform-origin: right; transition: transform 0.4s ease;
+  }
+  .enter-btn:hover::before { transform: scaleX(1); transform-origin: left; }
+  .enter-btn:hover { color: #000; }
+  .enter-btn span { position: relative; z-index: 1; }
+  @keyframes reveal-text { to { opacity: 1; transform: translateY(0); } }
+
+  /* ===== MAIN ===== */
+  #main { min-height: 100vh; opacity: 0; transition: opacity 1.5s ease; }
+  #main.visible { opacity: 1; }
+
+  /* ===== MUSIC PLAYER ===== */
+  #music-player {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 100; background: rgba(10,10,10,0.95);
+    border: 1px solid rgba(201,168,76,0.3); border-radius: 50px;
+    padding: 10px 20px; display: flex; align-items: center; gap: 12px;
+    backdrop-filter: blur(20px); width: min(340px, 90vw);
+    box-shadow: 0 0 30px rgba(201,168,76,0.1);
+  }
+  .music-vinyl {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: conic-gradient(from 0deg, #C9A84C, #333, #C9A84C, #111, #C9A84C);
+    flex-shrink: 0; position: relative;
+    animation: spin 4s linear infinite paused;
+  }
+  .music-vinyl.playing { animation-play-state: running; }
+  .music-vinyl::after {
+    content: ''; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%); width: 10px; height: 10px;
+    background: #000; border-radius: 50%; border: 2px solid var(--gold);
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .music-info { flex: 1; overflow: hidden; }
+  .music-song {
+    font-size: 0.75rem; color: var(--gold);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .music-artist { font-size: 0.65rem; color: rgba(201,168,76,0.5); margin-top: 2px; }
+  .music-btn {
+    background: none; border: none; color: var(--gold);
+    cursor: pointer; font-size: 1.1rem; padding: 4px;
+    transition: transform 0.2s; flex-shrink: 0;
+  }
+  .music-btn:hover { transform: scale(1.2); }
+  .music-bar {
+    width: 100%; height: 2px; background: rgba(201,168,76,0.2);
+    position: absolute; bottom: 0; left: 0;
+    border-radius: 0 0 50px 50px; overflow: hidden;
+  }
+  .music-progress { height: 100%; background: var(--gold); width: 0%; transition: width 0.3s linear; }
+
+  /* ===== HERO ===== */
+  #hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 60px 24px; position: relative; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(201,168,76,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 30% 30% at 20% 80%, rgba(201,168,76,0.04) 0%, transparent 60%);
+  }
+  .hero-ornament {
+    font-size: 3rem; color: var(--gold-dim); opacity: 0.4; margin-bottom: 20px;
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.3; text-shadow: none; }
+    50% { opacity: 0.7; text-shadow: 0 0 30px var(--gold); }
+  }
+  .hero-title {
+    font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 10vw, 5rem);
+    font-style: italic; color: var(--gold); line-height: 1.2;
+    text-shadow: 0 0 80px rgba(201,168,76,0.3); margin-bottom: 16px;
+  }
+  .hero-sub {
+    font-size: clamp(0.85rem, 3vw, 1rem); color: rgba(201,168,76,0.5);
+    letter-spacing: 4px; text-transform: uppercase; margin-bottom: 40px;
+  }
+  .hero-divider {
+    width: 120px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 0 auto 40px;
+  }
+  .hero-scroll-hint {
+    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    color: rgba(201,168,76,0.4); font-size: 0.7rem; letter-spacing: 2px;
+    animation: bounce-down 2s ease-in-out infinite;
+  }
+  @keyframes bounce-down {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(8px); }
+  }
+
+  /* ===== APOLOGY ===== */
+  #apology { padding: 80px 24px; max-width: 700px; margin: 0 auto; position: relative; }
+  .section-label {
+    font-size: 0.7rem; letter-spacing: 5px; color: var(--gold-dim);
+    text-transform: uppercase; text-align: center; margin-bottom: 20px;
+    opacity: 0; transform: translateY(20px); transition: all 0.8s ease;
+  }
+  .section-label.visible { opacity: 1; transform: translateY(0); }
+  .apology-card {
+    background: var(--black-card); border: 1px solid rgba(201,168,76,0.2);
+    padding: 40px 32px; position: relative; opacity: 0;
+    transform: translateY(40px); transition: all 1s ease;
+  }
+  .apology-card.visible { opacity: 1; transform: translateY(0); }
+  .apology-card::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 40px; height: 40px;
+    border-top: 2px solid var(--gold); border-left: 2px solid var(--gold);
+  }
+  .apology-card::after {
+    content: ''; position: absolute; bottom: 0; right: 0;
+    width: 40px; height: 40px;
+    border-bottom: 2px solid var(--gold); border-right: 2px solid var(--gold);
+  }
+  .apology-quote {
+    font-family: 'Playfair Display', serif; font-size: clamp(1.5rem, 5vw, 2.2rem);
+    font-style: italic; color: var(--gold); line-height: 1.6;
+    text-align: center; margin-bottom: 30px;
+  }
+  .apology-text {
+    font-size: clamp(0.9rem, 3vw, 1rem); color: rgba(232,213,163,0.8);
+    line-height: 2; text-align: center; font-weight: 300;
+  }
+  .apology-signature {
+    margin-top: 30px; text-align: center;
+    font-family: 'Playfair Display', serif; font-style: italic;
+    color: var(--gold-dim); font-size: 1.2rem;
+  }
+
+  /* ===== TIMELINE ===== */
+  #timeline { padding: 80px 0; position: relative; }
+  .timeline-title {
+    text-align: center; font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 6vw, 3rem); color: var(--gold);
+    margin-bottom: 60px; font-style: italic;
+  }
+  .timeline-container {
+    position: relative; padding: 0 20px; max-width: 600px; margin: 0 auto;
+  }
+  .timeline-line {
+    position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
+    background: linear-gradient(to bottom, transparent, var(--gold-dim), transparent);
+    transform: translateX(-50%);
+  }
+  .timeline-item {
+    display: flex; align-items: flex-start; margin-bottom: 60px;
+    position: relative; opacity: 0; transition: all 0.8s ease;
+  }
+  .timeline-item.left { flex-direction: row-reverse; }
+  .timeline-item.right { flex-direction: row; }
+  .timeline-item.visible { opacity: 1; }
+  .timeline-item.left.visible { animation: slide-from-right 0.8s ease forwards; }
+  .timeline-item.right.visible { animation: slide-from-left 0.8s ease forwards; }
+  @keyframes slide-from-right {
+    from { opacity: 0; transform: translateX(40px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes slide-from-left {
+    from { opacity: 0; transform: translateX(-40px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .timeline-dot {
+    position: absolute; left: 50%; top: 10px; transform: translateX(-50%);
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--gold); border: 2px solid #000;
+    box-shadow: 0 0 12px var(--gold); z-index: 1; flex-shrink: 0;
+  }
+  .timeline-content { width: calc(50% - 30px); padding: 0 10px; }
+  .timeline-item.left .timeline-content { text-align: left; padding-right: 0; padding-left: 10px; }
+  .timeline-item.right .timeline-content { text-align: right; padding-left: 0; padding-right: 10px; }
+  .timeline-photo {
+    width: 100%; aspect-ratio: 4/5; background: var(--black-card);
+    border: 1px solid rgba(201,168,76,0.3); overflow: hidden;
+    position: relative; cursor: pointer;
+  }
+  .timeline-photo img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: sepia(20%) brightness(0.9); transition: all 0.5s ease;
+  }
+  .timeline-photo:hover img { filter: sepia(0%) brightness(1.05); transform: scale(1.04); }
+  .photo-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 50%);
+    pointer-events: none;
+  }
+  .photo-number {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    font-size: 0.65rem; color: rgba(201,168,76,0.7); letter-spacing: 2px;
+  }
+  .timeline-label {
+    font-size: 0.7rem; letter-spacing: 3px; color: var(--gold-dim);
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .photo-placeholder {
+    width: 100%; height: 100%; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #0d0d0d, #1a1500); color: var(--gold-dim); gap: 10px;
+  }
+  .photo-placeholder .icon { font-size: 2rem; opacity: 0.5; }
+  .photo-placeholder .ph-text { font-size: 0.65rem; letter-spacing: 2px; opacity: 0.4; }
+
+  /* ===== GALLERY ===== */
+  #gallery { padding: 80px 20px; }
+  .gallery-title {
+    text-align: center; font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 6vw, 3rem); color: var(--gold);
+    margin-bottom: 12px; font-style: italic;
+  }
+  .gallery-subtitle {
+    text-align: center; font-size: 0.75rem; letter-spacing: 4px;
+    color: var(--gold-dim); text-transform: uppercase; margin-bottom: 50px;
+  }
+  .gallery-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 6px; max-width: 600px; margin: 0 auto;
+  }
+  .gallery-item {
+    aspect-ratio: 1; background: var(--black-card); overflow: hidden;
+    cursor: pointer; position: relative; opacity: 0;
+    transform: scale(0.9); transition: all 0.6s ease;
+  }
+  .gallery-item.visible { opacity: 1; transform: scale(1); }
+  .gallery-item img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: sepia(30%) brightness(0.85); transition: all 0.4s ease;
+  }
+  .gallery-item:hover img { filter: sepia(0%) brightness(1.1); transform: scale(1.08); }
+  .gallery-item-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0);
+    transition: background 0.3s; display: flex; align-items: center; justify-content: center;
+  }
+  .gallery-item:hover .gallery-item-overlay { background: rgba(201,168,76,0.1); }
+  .gallery-placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, #0a0a0a, #151200);
+    border: 1px solid rgba(201,168,76,0.1);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(201,168,76,0.2); font-size: 0.6rem; letter-spacing: 1px;
+  }
+
+  /* ===== LIGHTBOX ===== */
+  #lightbox {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.97); z-index: 999;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  #lightbox.open { display: flex; }
+  #lightbox img {
+    max-width: 100%; max-height: 90vh; object-fit: contain;
+    animation: zoom-in 0.3s ease;
+  }
+  @keyframes zoom-in {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .lightbox-close {
+    position: absolute; top: 20px; right: 20px; background: none;
+    border: 1px solid var(--gold); color: var(--gold);
+    width: 40px; height: 40px; cursor: pointer; font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ===== PROPOSAL ===== */
+  #proposal { padding: 100px 24px; text-align: center; position: relative; overflow: hidden; }
+  .proposal-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(201,168,76,0.08), transparent);
+  }
+  .proposal-title {
+    font-family: 'Playfair Display', serif; font-size: clamp(2rem, 8vw, 4rem);
+    color: var(--gold); font-style: italic; margin-bottom: 20px;
+    position: relative; text-shadow: 0 0 60px rgba(201,168,76,0.4);
+  }
+  .proposal-text {
+    max-width: 500px; margin: 0 auto 50px;
+    font-size: clamp(1rem, 3vw, 1.15rem); color: rgba(232,213,163,0.85);
+    line-height: 2; font-weight: 300; position: relative;
+  }
+  .proposal-buttons {
+    display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative;
+  }
+  .btn-yes {
+    padding: 16px 48px; background: var(--gold); border: none; color: #000;
+    font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 700;
+    letter-spacing: 3px; cursor: pointer; position: relative; overflow: hidden; transition: all 0.4s;
+  }
+  .btn-yes::before {
+    content: ''; position: absolute; inset: 0; background: var(--gold-light);
+    transform: scaleX(0); transform-origin: left; transition: transform 0.4s;
+  }
+  .btn-yes:hover::before { transform: scaleX(1); }
+  .btn-yes:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(201,168,76,0.5); }
+  .btn-yes span { position: relative; z-index: 1; }
+  .btn-maybe {
+    padding: 16px 32px; background: transparent;
+    border: 1px solid rgba(201,168,76,0.4); color: rgba(201,168,76,0.6);
+    font-family: 'Tajawal', sans-serif; font-size: 1rem;
+    letter-spacing: 2px; cursor: pointer; transition: all 0.3s;
+  }
+  .btn-maybe:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ===== FOOTER ===== */
+  footer { padding: 60px 24px 120px; text-align: center; border-top: 1px solid rgba(201,168,76,0.1); }
+  .footer-logo {
+    font-family: 'Playfair Display', serif; font-style: italic;
+    font-size: 1.5rem; color: var(--gold-dim); opacity: 0.5; letter-spacing: 3px;
+  }
+
+  /* ===== ANIMATIONS ===== */
+  .fade-up { opacity: 0; transform: translateY(30px); transition: all 0.8s ease; }
+  .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+  .proposal-scene { width: min(320px, 85vw); margin: 0 auto 40px; position: relative; }
+  .proposal-svg { width: 100%; height: auto; filter: drop-shadow(0 0 30px rgba(201,168,76,0.15)); }
+
+  /* ===== CONFETTI ===== */
+  .confetti-piece {
+    position: fixed; width: 6px; height: 6px; background: var(--gold);
+    top: -10px; animation: confetti-fall linear forwards; z-index: 9999;
+  }
+  @keyframes confetti-fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+
+  @media (max-width: 480px) {
+    .apology-card { padding: 28px 20px; }
+    .timeline-container { padding: 0 10px; }
+    .timeline-content { width: calc(50% - 20px); }
+  }
+</style>
+</head>
+<body>
+
+<!-- OPENING -->
+<div id="opening">
+  <div class="opening-particles" id="particles"></div>
+  <div class="opening-line"></div>
+  <h1 class="opening-title">لكِ وحدكِ</h1>
+  <p class="opening-subtitle">رسالة من القلب</p>
+  <div class="opening-line2"></div>
+  <button class="enter-btn" onclick="enterSite()">
+    <span>✦ يلا بينا ✦</span>
+  </button>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close">✕</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- 🎵 الأغنية مخفية تماماً - بتشتغل تلقائي لما تضغطي "يلا بينا" -->
+  <audio id="bg-audio" loop preload="auto" style="display:none;">
+    <source src="./Rana4/ayamybeek.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- البلاير الجميل -->
+  <div id="music-player">
+    <div class="music-vinyl" id="vinyl"></div>
+    <div class="music-info">
+      <div class="music-song" id="song-name">أيامي بيك - إليسا</div>
+      <div class="music-artist">Elissa • اليسا ♥</div>
+    </div>
+    <button class="music-btn" id="play-btn" onclick="toggleMusic()">▶</button>
+    <div class="music-bar"><div class="music-progress" id="progress"></div></div>
+  </div>
+
+  <!-- Hero -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-ornament">✦</div>
+    <h1 class="hero-title">ذكرياتنا</h1>
+    <p class="hero-sub">كل لحظة ● كل ابتسامة ● كل يوم</p>
+    <div class="hero-divider"></div>
+    <div class="hero-scroll-hint">
+      <span>▼</span>
+      <span style="font-size:0.6rem">اسحبي للأسفل</span>
+    </div>
+  </section>
+
+  <!-- Apology -->
+  <section id="apology">
+    <p class="section-label" data-anim>✦ كلمة من القلب ✦</p>
+    <div class="apology-card" data-anim>
+      <div class="apology-quote">"رنا انا بجد بعتذرلك ان زعلتك وضايقتك وقلقتك مني"</div>
+      <p class="apology-text">
+        واكتر حاجه تزعلني انا ابقي سبب في خوفك يوم من الايام
+        <br><br>
+        أنا عمري ما كنت عايز أكون مصدر خوفك، كنت دايمًا نفسي أكون أمانك.
+        <br><br>
+        كل صورة في الموقع ده بتحكيلك قد إيه اللحظات دي كانت مهمة بالنسبالي.
+        <br><br>
+        لو في موقف واحد مزعلك منني ففي ٢٧٢ سبب يخليكي متزعليش منني ويطمنك
+        <br><br>
+        عذراً من قلبي وكل اللي بعمله دا يقدر يثبتلك انتي ايه بالنسبالي.
+      </p>
+      <div class="apology-signature"></div>
+    </div>
+  </section>
+
+  <!-- Timeline -->
+  <section id="timeline">
+    <h2 class="timeline-title fade-up" data-anim>مسيرة ذكرياتنا</h2>
+    <div class="timeline-container">
+      <div class="timeline-line"></div>
+      <div id="timeline-items"></div>
+    </div>
+  </section>
+
+  <!-- Gallery -->
+  <section id="gallery">
+    <h2 class="gallery-title fade-up" data-anim>كل اللحظات</h2>
+    <p class="gallery-subtitle" data-anim>272 ذكرى • 272 سبب علشان نكمل</p>
+    <div class="gallery-grid" id="gallery-grid"></div>
+  </section>
+
+  <!-- Proposal -->
+  <div style="width:100%;height:.3px;background:#C9A84C;"></div>
+  <section id="proposal">
+    <div class="proposal-bg"></div>
+    <div class="proposal-scene fade-up" data-anim>
+      <img src="./Rana4/273.png" class="proposal-svg" alt="proposal">
+    </div>
+    <h2 class="proposal-title fade-up" data-anim>هتقبلي؟</h2>
+    <p class="proposal-text fade-up" data-anim>
+      بعد كل ده، وبعد كل ذكرى حلوة ليكي في قلبي
+      <br>
+      عايزك تعرفي إن قلبي ما اختارش غيرك ونفسي اكمل اللي جاي من عمري معاكي
+      <br><br>
+      هتديني فرصة نبدا من أول وجديد؟
+    </p>
+    <div class="proposal-buttons fade-up" data-anim>
+      <button class="btn-yes" onclick="sayYes()"><span>✦ أيوه ✦</span></button>
+      <button class="btn-maybe" onclick="sayMaybe()">محتاجة وقت</button>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-logo">لكِ وحدكِ ✦</div>
+  </footer>
+</div>
+
+<script>
+// ===== PARTICLES =====
+const particlesContainer = document.getElementById('particles');
+for (let i = 0; i < 40; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.left = Math.random() * 100 + '%';
+  p.style.width = (Math.random() * 3 + 1) + 'px';
+  p.style.height = p.style.width;
+  p.style.animationDuration = (Math.random() * 8 + 5) + 's';
+  p.style.animationDelay = (Math.random() * 6) + 's';
+  particlesContainer.appendChild(p);
+}
+
+// ===== ENTER SITE =====
+function enterSite() {
+  document.getElementById('opening').classList.add('hidden');
+  document.getElementById('main').classList.add('visible');
+  setTimeout(() => initObserver(), 100);
+  // تشغيل الأغنية تلقائي - الضغط على الزر يسمح للمتصفح يشغلها
+  setTimeout(() => startMusic(), 500);
+}
+
+// ===== 🎵 MUSIC PLAYER =====
+const audio = document.getElementById('bg-audio');
+let isPlaying = false;
+let progressInterval;
+
+function startMusic() {
+  audio.play().then(() => {
+    isPlaying = true;
+    document.getElementById('play-btn').textContent = '⏸';
+    document.getElementById('vinyl').classList.add('playing');
+    startProgressBar();
+  }).catch(() => {
+    // المتصفح منع التشغيل التلقائي - الزر هيشغلها يدوياً
+    isPlaying = false;
+  });
+}
+
+function toggleMusic() {
+  if (isPlaying) {
+    audio.pause();
+    isPlaying = false;
+    document.getElementById('play-btn').textContent = '▶';
+    document.getElementById('vinyl').classList.remove('playing');
+    clearInterval(progressInterval);
+  } else {
+    audio.play();
+    isPlaying = true;
+    document.getElementById('play-btn').textContent = '⏸';
+    document.getElementById('vinyl').classList.add('playing');
+    startProgressBar();
+  }
+}
+
+function startProgressBar() {
+  clearInterval(progressInterval);
+  progressInterval = setInterval(() => {
+    if (audio.duration) {
+      const pct = (audio.currentTime / audio.duration) * 100;
+      document.getElementById('progress').style.width = pct + '%';
+    }
+  }, 500);
+}
+
+// ===== PHOTOS =====
+const timelinePhotos = [
+  { src: './Rana4/274.jpg',  label: 'أول لقاء' },
+  { src: './Rana4/242.jpg',  label: 'تاني مره' },
+  { src: './Rana4/142.jpg',  label: 'الاجمل والاقرب' },
+  { src: './Rana4/119.jpg',  label: 'ابتسامتها' },
+  { src: './Rana4/202.jpg',  label: 'معايا دايماً' },
+  { src: './Rana4/169.jpg',  label: 'ذكرى خاصة' },
+  { src: './Rana4/58.jpg',   label: 'حاجات مش هتنفع' },
+  { src: './Rana4/178.jpg',  label: 'اللذاذه كلها' },
+  { src: './Rana4/166.jpg',  label: 'اكلك' },
+];
+
+const timelineContainer = document.getElementById('timeline-items');
+timelinePhotos.forEach((photo, i) => {
+  const isLeft = i % 2 === 0;
+  const item = document.createElement('div');
+  item.className = `timeline-item ${isLeft ? 'left' : 'right'}`;
+  item.setAttribute('data-timeline', '');
+  item.innerHTML = `
+    <div class="timeline-dot"></div>
+    <div class="timeline-content">
+      <div class="timeline-label">${photo.label}</div>
+      <div class="timeline-photo" onclick="openLightbox('${photo.src}')">
+        <img src="${photo.src}" alt="${photo.label}">
+        <div class="photo-overlay"></div>
+        <div class="photo-number">${String(i + 1).padStart(3, '0')}</div>
+      </div>
+    </div>
+  `;
+  timelineContainer.appendChild(item);
+});
+
+const galleryGrid = document.getElementById('gallery-grid');
+const galleryPhotos = Array.from({ length: 272 }, (_, i) => ({ src: `./Rana4/${i + 1}.jpg`, index: i + 1 }));
+galleryPhotos.forEach((photo, i) => {
+  const item = document.createElement('div');
+  item.className = 'gallery-item';
+  item.setAttribute('data-gallery', '');
+  item.innerHTML = `<img src="${photo.src}" alt="ذكرى ${photo.index}" loading="lazy"><div class="gallery-item-overlay"></div>`;
+  item.onclick = () => openLightbox(photo.src);
+  galleryGrid.appendChild(item);
+});
+
+// ===== LIGHTBOX =====
+function openLightbox(src) {
+  if (!src) return;
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+// ===== SCROLL OBSERVER =====
+function initObserver() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(el => { if (el.isIntersecting) el.target.classList.add('visible'); });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('[data-anim], [data-timeline], .gallery-item, .fade-up').forEach(el => observer.observe(el));
+  document.querySelectorAll('.gallery-item').forEach((item, i) => {
+    item.style.transitionDelay = (i % 9) * 0.05 + 's';
+  });
+}
+
+// ===== PROPOSAL =====
+function sayYes() {
+  for (let i = 0; i < 100; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = Math.random() > 0.5 ? '#C9A84C' : Math.random() > 0.5 ? '#F0D080' : '#fff';
+    c.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+    c.style.animationDelay = (Math.random() * 0.5) + 's';
+    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 3000);
+  }
+  document.getElementById('proposal').innerHTML = `
+    <div class="proposal-bg"></div>
+    <div style="position:relative;text-align:center;padding:60px 24px;">
+      <div style="font-size:5rem;margin-bottom:20px;animation:pulse-glow 1s infinite;">💛</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:clamp(2rem,8vw,3.5rem);color:var(--gold);font-style:italic;margin-bottom:24px;">
+        شكراً يا رنون
+      </h2>
+      <p style="font-size:1.1rem;color:rgba(232,213,163,0.9);line-height:2;max-width:400px;margin:0 auto;">
+        هتبدأ صفحة جديدة حلوة، وهكون معاكِ في كل خطوة. وهشيلك في عيوني ❤️
+      </p>
+    </div>
+  `;
+}
+
+function sayMaybe() {
+  document.querySelector('.proposal-buttons').innerHTML = `
+    <p style="color:var(--gold-dim);font-size:0.9rem;letter-spacing:2px;margin:0 auto;">
+      خدي وقتك… أنا هنا لما تكوني جاهزة ✦
+    </p>
+  `;
+}
+</script>
+</body>
+</html>
